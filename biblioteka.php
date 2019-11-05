@@ -39,12 +39,15 @@ if (isset($_POST['login'])) {
 }
 }
 
-// Pobierz karta użytkownika
-$wszystkieQuery = $db->prepare('SELECT * FROM karta WHERE id_hodowcy = :logged_id AND usun != 1 ORDER BY status ASC, kurnik ASC');
-$wszystkieQuery->bindValue(':logged_id', $_SESSION['logged_id'], PDO::PARAM_INT);
-$wszystkieQuery->execute();
+$ksiazkiQuery = $db->prepare('SELECT * FROM ksiazki');
+$ksiazkiQuery->execute();
 
-$wszystkie = $wszystkieQuery->fetchAll();
+$ksiazki = $ksiazkiQuery->fetchAll();
+
+
+
+
+
 ?>
 
 
@@ -58,105 +61,48 @@ $wszystkie = $wszystkieQuery->fetchAll();
 </head>
 <body>
 
+
+
+
+
+
+
 <div>
 <h1>Dostępne książki</h1>
 </div>
 <table>
         <thead>
                       <tr>
-                      <th colspan="5">Łącznie rekordów: <?= $wszystkieQuery->rowCount()?></th></tr>
-                      <tr><th>data wstawienia</th>
-                      <th>numer karty</th>
-                      <th>rasa</th>
-                      <th>kurnik</th>
-                      <th>ilość wstawiona [szt]</th>
-                      <th>% upadków</th>
-                      <th>wylęgarnia</th>
-                      <th>powierzchnia kurnika [m^2]</th>
-                      <th>numer faktury</th>
-                      <th>stado reprodukcyjne</th>
-                      <th>nr WZ </th>
+                      <th colspan="5">Łącznie pozycji: <?= $ksiazkiQuery->rowCount()?></th></tr>
+                      <tr>
+                      
+                      <th></th>
+                      <th>Tytuł</th>
+                      <th>Autor</th>
+                      <th>wydawnictwo</th>
+                      <th>ISBN</th>
+                      <th>sztuki</th>
+                      
                       </tr>
                   </thead>
                   <tbody>
                       <?php
-                      foreach ($wszystkie as $rząd) {
-
-                                    // Pobierz wylegarnie
-                                $dostepneQuery = $db->prepare('SELECT * FROM `ksiazki` WHERE sztuki > 0 AND id_ksiazki = :id');
-                                $dostepneQuery->bindValue(':id', $wszystkie["id_ksiazki"], PDO::PARAM_INT);
-                                $dostepneQuery->execute();
-
-                                $dostepne = $dostepneQuery->fetchAll(); 
-
-                                
-// pobierz karta -> wyciągnij dane z każdego dnia -> wypisz -> pobierz następny karta 
-                        
+                      foreach ($ksiazki as $ksiazka) {
+                        echo "                          
+                            <tr>
                             
-                            // Pobierz z karty padłe i selekcja 
-                        $dniQuery = $db->prepare('SELECT padle, selekcja FROM `dane` WHERE id_karta= :id_karta');
-                        $dniQuery->bindValue(':id_karta', $karta["id"], PDO::PARAM_INT);
-                        $dniQuery->execute();
-
-                        $dni = $dniQuery->fetchAll(); 
-                           
-
-                            $narast= 0;
-                        // sumy padłych
-                            foreach ($dni as $dzien) {
-
-                                $razem = $dzien ['padle'] + $dzien ['selekcja'];
-                                $narast = $narast + $razem;                                                            
-                            }
-
-                        // jeśli wstawione != 0,  podaj procent upadków zaokrąglony do 2 miejsca
-                            if ($karta ['ilosc'] != 0) {
-                                $p_upadki = round($narast / $karta ['ilosc'] * 100, 1); 
-                            } else {
-                                $p_upadki = "-";
-                            }
-
-
-                            if ($status == 1){
-                                echo '<tr style=" background-color: lightgrey;">';
-                            }  else { echo "<tr>";}
-                            
-                            
-                            echo
-                            "
-                                                        
-                            
-                            <td><a href='dni.php?id_karta={$karta['id']}'> {$karta ['data']}</a></td> 
-                            <td>{$karta ['id']}</td>
-                            <td>{$rasa [0][1]}</td>
-                            <td>{$karta ['kurnik']}</td>
-                            <td>{$karta ['ilosc']}</td>
-                            <td>{$p_upadki}%</td>
-                            <td>{$wylegarnia[0][1]}</td>
-                            <td>{$karta ['powierzchnia']}</td>
-                            <td>{$karta ['nr_faktury']}</td>
-                            <td>{$karta ['stado']}</td>
-                            <td>{$karta ['nr_wz']}</td>
+                            <td>{$ksiazka ['id_ksiazki']}</td>
+                            <td>{$ksiazka ['tytul']}</td>
+                            <td>{$ksiazka ['autor']}</td>
+                            <td>{$ksiazka ['wydawnictwo']}</td>
+                            <td>{$ksiazka['ISBN']}</td>
+                            <td>{$ksiazka ['sztuki']}</td>
+                            <td><a href='wypozycz.php?id_ksiazki={$ksiazka ['id_ksiazki']}'>Wypożycz!</a> 
+                            </tr>
                             ";
-                            
-                            if ($status == 1){
-                                echo "
-                                <td></td>
-                                <td><a href='karta-zamknij-dodaj.php?id_karta={$karta['id']}'>otwórz kartę</a></td>
-                                <td><a href='makepdf.php?id_karta={$karta['id']}'>utwórz pdf</a></td>
-                                ";
-                            } else {
-                                echo
-                            
-
-                            "
-                            <td><a href='karta-modyf.php?id_karta={$karta['id']}'>modyfikuj</a></td>
-                            <td><a href='karta-zamknij-dodaj.php?id_karta={$karta['id']}'>zamknij kartę</a></td>
-                            <td><a href='makepdf.php?id_karta={$karta['id']}'>utwórz pdf</a></td>
-                                </tr>
-                               
-                            ";}
-                        } 
+                                                        
+                            }
+                         
                         ?>
                   </tbody>
               </table>    
